@@ -68,7 +68,6 @@ def read_info(path):
         path: the file path
         
     Return:
-        num_robot: the number of the robot
         init_position_tuple:  a tuple save the initial postion of the all robots
         rendezvous_point: the coordiante of the rendezvous point
         coordinate_tuple: A tuple save all coordinates
@@ -76,11 +75,39 @@ def read_info(path):
     Note:All coordinates in the text are expressed as Cartesian coordinates 
          in the plane. So we need to convert it to a normal coordinate system.
     """
-    pass
+    info = []
+    init_position_tuple = ()
+    init_position_list = []
+    
+    with open(path, 'r') as file:
+        for line in file.readlines():
+            info.append(line)
+            
+        num_robot = int(info[1][0])
 
-
+        for index in range(num_robot):
+            point = [int(info[2+index][0]),int(info[2+index][2])]
+            init_position_list.append(point)
+        init_position_tuple = tuple(init_position_list)
+        
+        rendezvous_point = [int(info[num_robot + 2][0]), int(info[num_robot + 2][2])]
+        
+        def str2int(items):
+            new_items = []
+            for item in items:
+                new_items.append(int(item))
+            return new_items
+        
+        matrix = info[num_robot+3:] 
+        matrix[:] = map(str2int,zip(*matrix[::-1]))
+        matrix = tuple(matrix)
+        
+        return init_position_tuple, rendezvous_point, matrix
+        
+        
+        
 def init_all(file_path = 'test.txt'):
-    num_robot, init_position_tuple, rendezvous_point, coordinate_tuple = read_info(file_path)  
+    init_position_tuple, rendezvous_point, coordinate_tuple = read_info(file_path)  
     
     robot_list = []
     for init_postion in init_position_tuple:
