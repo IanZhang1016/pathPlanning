@@ -37,6 +37,10 @@ class Robot(object):
             
         Returns:
             None
+        
+        Note: We will use the instance variable coordinate_tuple. This variable stores 
+              information in a normal coordinate system, not Cartesian coordinates. 
+              This point is very important.
         """
         pass
     
@@ -69,8 +73,7 @@ def read_info(path):
         rendezvous_point: the coordiante of the rendezvous point
         coordinate_tuple: A tuple save all coordinates
         
-    Note:All coordinates in the text 
-le are expressed as Cartesian coordinates 
+    Note:All coordinates in the text are expressed as Cartesian coordinates 
          in the plane. So we need to convert it to a normal coordinate system.
     """
     pass
