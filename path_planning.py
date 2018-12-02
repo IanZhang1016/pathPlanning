@@ -190,6 +190,14 @@ def read_info(path):
         
         
 def init_all(file_path = 'test.txt'):
+    """Create instances of class Robot, and create a list save all robot instances
+    
+    Args:
+        file_path: A file path save the information file, and the default value is 'test.txt'
+        
+    Return:
+        robot_list: The list save all robot instances
+    """
     init_position_tuple, rendezvous_point, coordinate_tuple = read_info(file_path)  
     
     robot_list = []
