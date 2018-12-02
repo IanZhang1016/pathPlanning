@@ -4,6 +4,7 @@ Created on Wed Nov 28 12:57:33 2018
 
 @author: Group 5
 """
+import numpy as np
 
 
 class Robot(object):
@@ -20,8 +21,8 @@ class Robot(object):
         Returns:
             None
         """
-        self.coordnate_tuple = coordinate_tuple
-        self.init_init_position = init_position
+        self.coordinate_tuple = coordinate_tuple
+        self.init_position = init_position
         self.rendezvous_point = rendezvous_point
         self.path = []
     
@@ -36,14 +37,74 @@ class Robot(object):
             None
             
         Returns:
-            None
+            False: means didn't find path
+            path: means find path
         
         Note: We will use the instance variable coordinate_tuple. This variable stores 
               information in a normal coordinate system, not Cartesian coordinates. 
               This point is very important.
         """
-        pass
-    
+        closed_list = []
+        open_list = [self.init_position]
+        pred = np.full((len(self.coordinate_tuple),len(self.coordinate_tuple[0])),None)
+        g_score = np.zeros((len(self.coordinate_tuple),len(self.coordinate_tuple[0])))
+        h_score = np.zeros((len(self.coordinate_tuple),len(self.coordinate_tuple[0])))
+        f_score = np.zeros((len(self.coordinate_tuple),len(self.coordinate_tuple[0])))
+        
+        
+        def heuristic_estimate_of_distance(point,sec_point=self.rendezvous_point):
+            return np.linalg.norm(np.array(point) - np.array(sec_point))
+
+                
+        def construct_path():
+            path = []
+            index = self.rendezvous_point
+            while index != self.init_position:
+                path.append(index)
+                index = pred[index[0],index[1]]
+            path.append(self.init_position) 
+            return path
+            
+            
+        h_score[self.init_position[0], self.init_position[1]] = heuristic_estimate_of_distance(self.init_position)
+        
+        
+        while open_list:
+            x = open_list[0]
+            if x == self.rendezvous_point:
+                return construct_path()
+
+            open_list.pop(0)
+            closed_list.append(x)
+            
+            neigh_list = []
+            for i in range(-1, 2):
+                if x[0] + i > 0 and x[0] + i < len(self.coordinate_tuple):
+                    for j in range(-1, 2):
+                        if x[1] + j < len(self.coordinate_tuple[0]):
+                            if x[1] + j > 0 and x != [x[0] + i, x[1] + j] and self.coordinate_tuple[x[0] + i][x[1] + j] == 0:                        
+                                neigh_list.append([x[0] + i,x[1] + j])
+                    
+            for y in neigh_list:
+                if y in closed_list:
+                    continue
+                tentative_g_score = g_score[x[0],x[1]] + heuristic_estimate_of_distance(x,y)
+                
+                if y not in open_list:
+                    open_list.append(y)
+                    tentative_is_better = True
+                elif tentative_g_score < g_score[y[0],y[1]]:
+                    tentative_is_better = True
+                else:
+                    tentative_is_better = False
+                
+                if tentative_is_better:
+                    pred[y[0],y[1]] = x
+                    g_score[y[0],y[1]] = tentative_g_score
+                    h_score[y[0],y[1]] = heuristic_estimate_of_distance(y)
+                    f_score[y[0],y[1]] = g_score[y[0],y[1]] + h_score[y[0],y[1]]
+                    sorted(open_list, key = lambda x: f_score[x[0], x[1]])
+        return False
     
     def print_path(self):
         """Print the path
@@ -56,7 +117,16 @@ class Robot(object):
         Returns:
             None
         """
-        pass
+        f = open('output.txt','a')
+        print(self.path)
+        for point in reversed(self.path):
+            f.write('(' + str(point[0]) + ',' +str(point[1]) + ')')
+        f.write('\n')
+        f.close()
+        
+    def set_path(self):
+        self.path = self.find_path()
+            
     
     
 def read_info(path):
@@ -112,7 +182,7 @@ def init_all(file_path = 'test.txt'):
     robot_list = []
     for init_postion in init_position_tuple:
         robot = Robot(coordinate_tuple, init_postion, rendezvous_point)
-        robot.find_path()
+        robot.set_path()
         robot_list.append(robot)
     
     return robot_list
