@@ -78,12 +78,24 @@ class Robot(object):
             closed_list.append(x)
             
             neigh_list = []
+
+            #The robot can only move to up, down, left, right
             for i in range(-1, 2):
                 if x[0] + i > 0 and x[0] + i < len(self.coordinate_tuple):
                     for j in range(-1, 2):
-                        if x[1] + j < len(self.coordinate_tuple[0]):
+                        if x[1] + j < len(self.coordinate_tuple[0]) and abs(i) != abs(j):
                             if x[1] + j > 0 and x != [x[0] + i, x[1] + j] and self.coordinate_tuple[x[0] + i][x[1] + j] == 0:                        
                                 neigh_list.append([x[0] + i,x[1] + j])
+
+# =============================================================================
+#             #The robot can move to north, west, south, east, northwest, northeast, southwest, southeast
+#             for i in range(-1, 2):
+#                 if x[0] + i > 0 and x[0] + i < len(self.coordinate_tuple):
+#                     for j in range(-1, 2):
+#                         if x[1] + j < len(self.coordinate_tuple[0]):
+#                             if x[1] + j > 0 and x != [x[0] + i, x[1] + j] and self.coordinate_tuple[x[0] + i][x[1] + j] == 0:                        
+#                                 neigh_list.append([x[0] + i,x[1] + j])
+# =============================================================================
                     
             for y in neigh_list:
                 if y in closed_list:
@@ -119,6 +131,7 @@ class Robot(object):
         """
         f = open('output.txt','a')
         print(self.path)
+        f.write('One robot path\n')
         for point in reversed(self.path):
             f.write('(' + str(point[0]) + ',' +str(point[1]) + ')')
         f.write('\n')
