@@ -131,7 +131,7 @@ class Robot(object):
         """
         f = open('output.txt','a')
         print(self.path)
-        f.write('One robot path\n')
+        f.write('One robot path:\n')
         for point in reversed(self.path):
             f.write('(' + str(point[0]) + ',' +str(point[1]) + ')')
         f.write('\n')
