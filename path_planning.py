@@ -132,8 +132,8 @@ class Robot(object):
             None
         """
         figure, ax = plt.subplots()
-        ax.set_xlim(left=0,right=25)
-        ax.set_ylim(bottom=0,top=30)
+        ax.set_xlim(left=0,right=30)
+        ax.set_ylim(bottom=0,top=25)
         if self.path:
             f = open('output.txt','a')
             print(self.path)
