@@ -5,6 +5,8 @@ Created on Wed Nov 28 12:57:33 2018
 @author: Group 5
 """
 import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
 
 
 class Robot(object):
@@ -129,14 +131,21 @@ class Robot(object):
         Returns:
             None
         """
+        figure, ax = plt.subplots()
+        ax.set_xlim(left=0,right=25)
+        ax.set_ylim(bottom=0,top=30)
         if self.path:
             f = open('output.txt','a')
             print(self.path)
             f.write('One robot path:\n')
+            line_x, line_y = zip(*self.path)
+            ax.add_line(Line2D(line_x, line_y, linewidth=1, color='red'))
             for point in reversed(self.path):
                 f.write('(' + str(point[0]) + ',' +str(point[1]) + ')')
             f.write('\n')
             f.close()
+            plt.plot()
+            plt.show()
         else:
             print('No path exists.')
         
@@ -196,7 +205,7 @@ def read_info(path):
         
         
         
-def init_all(file_path = 'test1.txt'):
+def init_all(file_path = 'test4.txt'):
     """Create instances of class Robot, and create a list save all robot instances
     
     Args:
