@@ -129,13 +129,17 @@ class Robot(object):
         Returns:
             None
         """
-        f = open('output.txt','a')
-        print(self.path)
-        f.write('One robot path:\n')
-        for point in reversed(self.path):
-            f.write('(' + str(point[0]) + ',' +str(point[1]) + ')')
-        f.write('\n')
-        f.close()
+        if self.path:
+            f = open('output.txt','a')
+            print(self.path)
+            f.write('One robot path:\n')
+            for point in reversed(self.path):
+                f.write('(' + str(point[0]) + ',' +str(point[1]) + ')')
+            f.write('\n')
+            f.close()
+        else:
+            print('No path exists.')
+        
         
     def set_path(self):
         self.path = self.find_path()
@@ -192,7 +196,7 @@ def read_info(path):
         
         
         
-def init_all(file_path = 'test4.txt'):
+def init_all(file_path = 'test1.txt'):
     """Create instances of class Robot, and create a list save all robot instances
     
     Args:
