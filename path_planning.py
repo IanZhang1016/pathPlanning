@@ -167,13 +167,16 @@ def read_info(path):
             info.append(line)
             
         num_robot = int(info[1][0])
-
+        temp = []
+        for i in range(2+int(info[1][0])+1):
+            temp.append(info[i].split())
+        
         for index in range(num_robot):
-            point = [int(info[2+index][0]),int(info[2+index][2])]
+            point = [int(temp[2+index][0]),int(temp[2+index][1])]
             init_position_list.append(point)
         init_position_tuple = tuple(init_position_list)
         
-        rendezvous_point = [int(info[num_robot + 2][0]), int(info[num_robot + 2][2])]
+        rendezvous_point = [int(temp[num_robot + 2][0]), int(temp[num_robot + 2][1])]
         
         def str2int(items):
             new_items = []
@@ -185,11 +188,11 @@ def read_info(path):
         matrix[:] = map(str2int,zip(*matrix[::-1]))
         matrix = tuple(matrix)
         
-        return init_position_tuple, rendezvous_point, matrix
+    return init_position_tuple, rendezvous_point, matrix
         
         
         
-def init_all(file_path = 'test.txt'):
+def init_all(file_path = 'test4.txt'):
     """Create instances of class Robot, and create a list save all robot instances
     
     Args:
