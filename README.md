@@ -1,4 +1,4 @@
-# pathPlanning
+# CP468-pathPlanning
 Problem defination
 Path Planning
 The purpose of this CP468 term project is to design and implement an A?-based algorithm to solve a path
