@@ -7,6 +7,9 @@ Created on Wed Nov 28 12:57:33 2018
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
+from multiprocessing import Queue, Lock, Pool
+import multiprocessing
+import time
 
 
 class Robot(object):
@@ -54,7 +57,7 @@ class Robot(object):
         f_score = np.zeros((len(self.coordinate_tuple),len(self.coordinate_tuple[0])))
         
         
-        def heuristic_estimate_of_distance(point,sec_point=self.rendezvous_point):
+        def heuristic_estimate_of_distance(point, sec_point=self.rendezvous_point):
             return np.linalg.norm(np.array(point) - np.array(sec_point))
 
                 
@@ -66,43 +69,37 @@ class Robot(object):
                 index = pred[index[0],index[1]]
             path.append(self.init_position) 
             return path
-            
-            
+
         h_score[self.init_position[0], self.init_position[1]] = heuristic_estimate_of_distance(self.init_position)
-        
-        
+
         while open_list:
             x = open_list[0]
             if x == self.rendezvous_point:
                 return construct_path()
-
             open_list.pop(0)
             closed_list.append(x)
             
             neigh_list = []
-
-            #The robot can only move to up, down, left, right
+            # The robot can only move to up, down, left, right
             for i in range(-1, 2):
-                if x[0] + i > 0 and x[0] + i < len(self.coordinate_tuple):
+                if x[0] + i >= 0 and x[0] + i < len(self.coordinate_tuple):
                     for j in range(-1, 2):
                         if x[1] + j < len(self.coordinate_tuple[0]) and abs(i) != abs(j):
-                            if x[1] + j > 0 and x != [x[0] + i, x[1] + j] and self.coordinate_tuple[x[0] + i][x[1] + j] == 0:                        
+                            if x[1] + j >= 0 and x != [x[0] + i, x[1] + j] and self.coordinate_tuple[x[0] + i][x[1] + j] == 0:
                                 neigh_list.append([x[0] + i,x[1] + j])
 
-# =============================================================================
-#             #The robot can move to north, west, south, east, northwest, northeast, southwest, southeast
-#             for i in range(-1, 2):
-#                 if x[0] + i > 0 and x[0] + i < len(self.coordinate_tuple):
-#                     for j in range(-1, 2):
-#                         if x[1] + j < len(self.coordinate_tuple[0]):
-#                             if x[1] + j > 0 and x != [x[0] + i, x[1] + j] and self.coordinate_tuple[x[0] + i][x[1] + j] == 0:                        
-#                                 neigh_list.append([x[0] + i,x[1] + j])
-# =============================================================================
-                    
+            # #The robot can move to north, west, south, east, northwest, northeast, southwest, southeast
+            # for i in range(-1, 2):
+            #     if x[0] + i >= 0 and x[0] + i < len(self.coordinate_tuple):
+            #         for j in range(-1, 2):
+            #             if x[1] + j < len(self.coordinate_tuple[0]):
+            #                 if x[1] + j >= 0 and x != [x[0] + i, x[1] + j] and self.coordinate_tuple[x[0] + i][x[1] + j] == 0:
+            #                     neigh_list.append([x[0] + i,x[1] + j])
+
             for y in neigh_list:
                 if y in closed_list:
                     continue
-                tentative_g_score = g_score[x[0],x[1]] + heuristic_estimate_of_distance(x,y)
+                tentative_g_score = g_score[x[0], x[1]] + heuristic_estimate_of_distance(x, y)
                 
                 if y not in open_list:
                     open_list.append(y)
@@ -131,30 +128,35 @@ class Robot(object):
         Returns:
             None
         """
-        figure, ax = plt.subplots()
-        ax.set_xlim(left=0,right=30)
-        ax.set_ylim(bottom=0,top=25)
         if self.path:
             f = open('output.txt','a')
+            print('The robot initial position is ' + str(self.init_position) + ' has a path to ' + str(self.rendezvous_point) + ' :')
             print(self.path)
-            f.write('One robot path:\n')
-            line_x, line_y = zip(*self.path)
-            ax.add_line(Line2D(line_x, line_y, linewidth=1, color='red'))
+            f.write('One robot path from ' + str(self.init_position) + ' to ' + str(self.rendezvous_point) + ':\n')
             for point in reversed(self.path):
-                f.write('(' + str(point[0]) + ',' +str(point[1]) + ')')
+                f.write('(' + str(point[0]) + ',' + str(point[1]) + ')')
             f.write('\n')
             f.close()
+
+            figure, ax = plt.subplots()
+            ax.set_xlim(left=0, right=len(self.coordinate_tuple))
+            ax.set_ylim(bottom=0, top=len(self.coordinate_tuple[0]))
+            line_x, line_y = zip(*self.path)
+            ax.add_line(Line2D(line_x, line_y, linewidth=1, color='red'))
+            plt.title('From ' + str(self.init_position) + ' to ' + str(self.rendezvous_point))
             plt.plot()
             plt.show()
         else:
-            print('No path exists.')
-        
-        
-    def set_path(self):
+            print('The robot initial position is ' + str(self.init_position) + ' has not a path to ' + str(self.rendezvous_point) + ' .')
+
+
+    def set_path(self, q, lock):
         self.path = self.find_path()
+        lock.acquire()
+        q.put(self)
+        lock.release()
             
-    
-    
+
 def read_info(path):
     """Read the information from the txt file
     
@@ -172,7 +174,6 @@ def read_info(path):
          in the plane. So we need to convert it to a normal coordinate system.
     """
     info = []
-    init_position_tuple = ()
     init_position_list = []
     
     with open(path, 'r') as file:
@@ -203,9 +204,8 @@ def read_info(path):
         
     return init_position_tuple, rendezvous_point, matrix
         
-        
-        
-def init_all(file_path = 'test4.txt'):
+
+def init_all(file_path = 'path_planning_1.txt'):
     """Create instances of class Robot, and create a list save all robot instances
     
     Args:
@@ -214,19 +214,29 @@ def init_all(file_path = 'test4.txt'):
     Return:
         robot_list: The list save all robot instances
     """
-    init_position_tuple, rendezvous_point, coordinate_tuple = read_info(file_path)  
-    
+    init_position_tuple, rendezvous_point, coordinate_tuple = read_info(file_path)
+    manage = multiprocessing.Manager()
+    q = manage.Queue()
+    lock = manage.Lock()
+    p = Pool(len(init_position_tuple))
     robot_list = []
-    for init_postion in init_position_tuple:
-        robot = Robot(coordinate_tuple, init_postion, rendezvous_point)
-        robot.set_path()
-        robot_list.append(robot)
-    
+    for init_position in init_position_tuple:
+        robot = Robot(coordinate_tuple, init_position, rendezvous_point)
+        p.apply_async(robot.set_path, args=(q,lock))
+    p.close()
+    p.join()
+
+    while True:
+        if not q.empty():
+            robot_list.append(q.get(True))
+        else:
+            break
+
     return robot_list
 
 
 def get_result(robot_list):
-    """Using a loop to invoke the print_path method
+    """Using a loop to call the print_path method of each instances
     
     Args:
         roobot_list: A list save the all instances of Class Robot
@@ -239,9 +249,12 @@ def get_result(robot_list):
 
     
 def main():
-    robot_list = init_all() ##need input the information file path
+    start = time.time()
+    robot_list = init_all('path_planning_5.txt')    # Need input the test file path
+    end = time.time()
+    print("The main process runs %0.4f seconds." % (end - start))
     get_result(robot_list)
-    
+
 
 if __name__ == '__main__':
     main()
